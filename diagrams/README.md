@@ -104,6 +104,21 @@ Ces deux entités et leurs enums forment le **Module Notifications & Emails**, m
 
 Cette règle n'est pas un champ du MCD — elle se traduit dans les règles d'autorisation de la gateway/Spring Security (voir `ARCHITECTURE.md`), mais elle explique pourquoi `Client` a maintenant besoin d'un `motDePasse`/`keycloakId` alors qu'avant il n'était qu'une fiche contact.
 
+## Mise à jour : `Adresse` en objet embarqué (pas une collection à part)
+
+`Client.adresse` et `Fournisseur.adresse` étaient jusqu'ici un simple `String`. Ils pointent maintenant vers un type **`Adresse`** (`rue`, `ville`, `codePostal`, `pays`), mais **`Adresse` n'est pas une entité indépendante** : pas de `id`, pas de table/collection à elle, et le diagramme le montre avec une **composition UML** (losange plein sur `Client`/`Fournisseur`, ligne pointillée grise vers `Adresse` marquée `«embeddable»`) plutôt qu'une association classique avec FK.
+
+**Pourquoi l'embarquer plutôt qu'en faire un document/table séparé, indépendamment du SGBD :**
+- Une adresse n'a pas d'identité propre ni de cycle de vie propre : elle n'existe jamais sans son `Client` ou son `Fournisseur`, et elle est créée/modifiée/supprimée avec lui.
+- On ne la requête jamais seule ("donne-moi toutes les adresses") indépendamment de son propriétaire.
+- Elle est systématiquement chargée en même temps que son propriétaire : l'embarquer évite un lookup/jointure pour une donnée toujours consommée ensemble.
+
+**Traduction concrète selon la techno de persistance :**
+- **MongoDB** : `Adresse` devient un sous-document imbriqué directement dans le document `client` ou `fournisseur` (pas de collection `adresses` séparée, pas de `$lookup`).
+- **Base relationnelle (JPA)** : `Adresse` devient une classe annotée `@Embeddable`, utilisée via `@Embedded` dans `Client`/`Fournisseur` — ses colonnes (`rue`, `ville`, `codePostal`, `pays`) sont créées directement dans la table `client`/`fournisseur`, pas dans une table séparée avec FK.
+
+Dans les deux cas, le modèle conceptuel (le diagramme) ne change pas — seule la traduction technique diffère. C'est la bonne façon de lire "composition" dans un MCD : une décision de modélisation indépendante du SGBD choisi, qui se traduit différemment selon la techno mais reste la même idée (pas de cycle de vie propre, pas d'identité propre).
+
 ## Prochaines étapes possibles
 
 - Ajouter un enum `EtatVente` (`PAYEE`, `ANNULEE`, `REMBOURSEE`) si la vente a besoin d'un cycle de vie propre.

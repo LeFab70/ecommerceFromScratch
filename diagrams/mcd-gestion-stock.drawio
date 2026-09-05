@@ -157,7 +157,7 @@
         <mxCell id="client-6" value="+ numTel: String" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="client">
           <mxGeometry y="140" width="220" height="22" as="geometry" />
         </mxCell>
-        <mxCell id="client-7" value="+ adresse: String" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="client">
+        <mxCell id="client-7" value="+ adresse: Adresse" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="client">
           <mxGeometry y="162" width="220" height="22" as="geometry" />
         </mxCell>
         <mxCell id="client-8" value="+ type: TypeClient" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;fontColor=#9673A6;" vertex="1" parent="client">
@@ -269,7 +269,7 @@
         <mxCell id="fournisseur-5" value="+ numTel: String" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="fournisseur">
           <mxGeometry y="118" width="220" height="22" as="geometry" />
         </mxCell>
-        <mxCell id="fournisseur-6" value="+ adresse: String" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="fournisseur">
+        <mxCell id="fournisseur-6" value="+ adresse: Adresse" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="fournisseur">
           <mxGeometry y="140" width="220" height="22" as="geometry" />
         </mxCell>
         <mxCell id="fournisseur-7" value="+ entreprise_id: Long [FK]" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="fournisseur">
@@ -318,7 +318,7 @@
 
         <!-- ===================== LEGENDE ===================== -->
         <mxCell id="legend" value="Legende" style="swimlane;fontStyle=1;align=center;verticalAlign=middle;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=0;resizeParentMax=0;collapsible=0;marginBottom=0;fillColor=#f5f5f5;strokeColor=#666666;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="1860" y="800" width="300" height="216" as="geometry" />
+          <mxGeometry x="1860" y="800" width="300" height="236" as="geometry" />
         </mxCell>
         <mxCell id="legend-1" value="Bleu : entites de reference" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="legend">
           <mxGeometry y="26" width="300" height="20" as="geometry" />
@@ -346,6 +346,9 @@
         </mxCell>
         <mxCell id="legend-9" value="Teal gras : attribut lie au seuil de stock" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=10;fontColor=#0e8088;" vertex="1" parent="legend">
           <mxGeometry y="186" width="300" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-10" value="Losange plein : composition (objet embarque)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="legend">
+          <mxGeometry y="206" width="300" height="20" as="geometry" />
         </mxCell>
 
         <!-- ===================== COMMANDE FOURNISSEUR ===================== -->
@@ -540,6 +543,34 @@
         </mxCell>
         <mxCell id="statutnotification-3" value="ECHEC" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="statutnotification">
           <mxGeometry y="96" width="200" height="22" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== ADRESSE (VALUE OBJECT / EMBEDDABLE, sans PK) ===================== -->
+        <mxCell id="adresseVO" value="Adresse" style="swimlane;fontStyle=1;align=center;verticalAlign=middle;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=0;resizeParentMax=0;collapsible=0;marginBottom=0;fillColor=#f5f5f5;strokeColor=#666666;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="340" y="800" width="190" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="adresseVO-0" value="&amp;laquo;embeddable&amp;raquo;" style="text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontStyle=2;overflow=hidden;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="adresseVO">
+          <mxGeometry y="30" width="190" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="adresseVO-1" value="rue: String" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="adresseVO">
+          <mxGeometry y="52" width="190" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="adresseVO-2" value="ville: String" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="adresseVO">
+          <mxGeometry y="74" width="190" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="adresseVO-3" value="codePostal: String" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="adresseVO">
+          <mxGeometry y="96" width="190" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="adresseVO-4" value="pays: String" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="adresseVO">
+          <mxGeometry y="118" width="190" height="22" as="geometry" />
+        </mxCell>
+
+        <!-- Compositions (losange plein = objet embarque, pas de cycle de vie propre) -->
+        <mxCell id="edge-client-adresse" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=diamondThin;startFill=1;endArrow=none;strokeColor=#666666;" edge="1" parent="1" source="client" target="adresseVO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-fournisseur-adresse" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=diamondThin;startFill=1;endArrow=none;strokeColor=#666666;" edge="1" parent="1" source="fournisseur" target="adresseVO">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- ===================== ASSOCIATIONS PRINCIPALES ===================== -->
