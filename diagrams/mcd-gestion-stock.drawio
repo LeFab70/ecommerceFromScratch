@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" agent="Claude Code" version="24.7.5">
   <diagram name="MCD - Gestion de stock" id="mcd-gestion-stock">
-    <mxGraphModel dx="1880" dy="1154" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2500" pageHeight="2500" math="0" shadow="0">
+    <mxGraphModel dx="1880" dy="1154" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2500" pageHeight="2600" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
         <!-- ===================== ZONE B FRAME (background) ===================== -->
         <mxCell id="zoneb-frame" value="Module Notifications &amp; Emails" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fillColor=none;strokeColor=#0e8088;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontStyle=1;fontSize=13;fontColor=#0e8088;" vertex="1" parent="1">
-          <mxGeometry x="0" y="1960" width="1700" height="540" as="geometry" />
+          <mxGeometry x="0" y="1960" width="1700" height="600" as="geometry" />
         </mxCell>
 
         <!-- ===================== ENTREPRISE ===================== -->
@@ -516,7 +516,7 @@
 
         <!-- ===================== CANAL NOTIFICATION (ENUM, NOUVEAU) ===================== -->
         <mxCell id="canalnotification" value="CanalNotification" style="swimlane;fontStyle=1;align=center;verticalAlign=middle;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=0;resizeParentMax=0;collapsible=0;marginBottom=0;fillColor=#fff2cc;strokeColor=#d6b656;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1">
-          <mxGeometry x="760" y="2222" width="200" height="96" as="geometry" />
+          <mxGeometry x="760" y="2222" width="200" height="118" as="geometry" />
         </mxCell>
         <mxCell id="canalnotification-0" value="&amp;laquo;enumeration&amp;raquo;" style="text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontStyle=2;overflow=hidden;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="canalnotification">
           <mxGeometry y="30" width="200" height="22" as="geometry" />
@@ -527,10 +527,13 @@
         <mxCell id="canalnotification-2" value="SMS" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="canalnotification">
           <mxGeometry y="74" width="200" height="22" as="geometry" />
         </mxCell>
+        <mxCell id="canalnotification-3" value="WEBSOCKET" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;overflow=hidden;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="canalnotification">
+          <mxGeometry y="96" width="200" height="22" as="geometry" />
+        </mxCell>
 
         <!-- ===================== STATUT NOTIFICATION (ENUM, NOUVEAU) ===================== -->
         <mxCell id="statutnotification" value="StatutNotification" style="swimlane;fontStyle=1;align=center;verticalAlign=middle;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=0;resizeParentMax=0;collapsible=0;marginBottom=0;fillColor=#fff2cc;strokeColor=#d6b656;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1">
-          <mxGeometry x="760" y="2358" width="200" height="118" as="geometry" />
+          <mxGeometry x="760" y="2400" width="200" height="118" as="geometry" />
         </mxCell>
         <mxCell id="statutnotification-0" value="&amp;laquo;enumeration&amp;raquo;" style="text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontStyle=2;overflow=hidden;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="statutnotification">
           <mxGeometry y="30" width="200" height="22" as="geometry" />
@@ -774,7 +777,7 @@
         <mxCell id="edge-notif-statut" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#9673A6;" edge="1" parent="1" source="notification" target="statutnotification">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="700" y="2400" />
+              <mxPoint x="700" y="2385" />
             </Array>
           </mxGeometry>
         </mxCell>

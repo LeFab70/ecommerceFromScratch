@@ -8,10 +8,12 @@ Ce document couvre les décisions techniques qui ne se modélisent pas dans un M
 flowchart TB
     subgraph Clients
         Angular[Frontend Angular]
+        SwiftUI["App iOS<br/>(SwiftUI)"]
         Guest[Visiteur non connecte]
     end
 
     Angular --> GW
+    SwiftUI --> GW
     Guest --> GW
 
     GW["API Gateway<br/>(Spring Cloud Gateway)"]
@@ -49,6 +51,10 @@ flowchart TB
 
     CDE -- Kafka --> NOTIF["Service Notification"]
     CAT -- Kafka (stock.seuil-atteint) --> NOTIF
+    Angular -. WebSocket wss:// .-> GW
+    SwiftUI -. WebSocket wss:// .-> GW
+    GW -. route WebSocket .-> NOTIF
+    NOTIF -. pub/sub fan-out .-> REDIS
 
     subgraph Observabilite
         PROM[Prometheus]
@@ -119,6 +125,10 @@ Ceci ne change pas les règles d'autorisation déjà définies (catalogue public
 - **Keycloak** reste la source de vérité pour l'identité : un realm dédié, deux populations — `Utilisateur` (rôle `ADMIN`/`GESTIONNAIRE`/`VENDEUR`) et `Client` (rôle `CLIENT`).
 - Chaque `Utilisateur`/`Client` porte un `keycloakId` (voir MCD) ; aucun mot de passe en clair côté applicatif.
 - **Spring Security (Resource Server / OAuth2)** valide le JWT sur chaque service, en complément de la vérification au niveau du Gateway.
+- **Deux clients, deux flux OAuth2 différents côté Keycloak** — même realm, même backend, mais l'implémentation d'authentification diffère selon la plateforme :
+  - **Angular (SPA)** : Authorization Code + PKCE via une librairie type `angular-oauth2-oidc` ou `keycloak-angular`, redirection navigateur classique.
+  - **App iOS (SwiftUI)** : Authorization Code + PKCE également (recommandé pour tout client natif/mobile — jamais de flux "password" ou "implicit", dépréciés et moins sûrs), via `ASWebAuthenticationSession` pour ouvrir l'écran de connexion Keycloak et récupérer le token, puis stockage du refresh token dans le **Keychain** (jamais `UserDefaults`).
+  - Dans les deux cas, le token obtenu est le même type de JWT, vérifié de la même façon côté Gateway/services — la différence est uniquement dans la façon dont chaque client l'obtient.
 
 ### Règles d'accès
 
@@ -128,6 +138,7 @@ Ceci ne change pas les règles d'autorisation déjà définies (catalogue public
 | `POST /api/commandes-client` (passer une commande) | `Client` connecté (rôle `CLIENT`) |
 | `GET /api/commandes-client/{id}` (suivi de commande) | `Client` propriétaire de la commande, ou `Utilisateur` de l'entreprise |
 | `POST /api/assistant/chat` (assistant IA) | `Client` connecté si la question porte sur une commande précise ; accessible sans connexion pour des questions générales (FAQ, disponibilité produit) |
+| `wss://.../ws/commandes/{commandeId}` (suivi temps réel) | `Client` connecté et propriétaire de `commandeId` — même règle que le suivi de commande REST |
 | Tout endpoint `/api/admin/**`, `/api/ventes/**`, `/api/commandes-fournisseur/**`, `/api/dashboard/**` | `Utilisateur` connecté, filtré par `RoleUtilisateur` via `@PreAuthorize` |
 
 ## Trafic client à fort volume (WebFlux)
@@ -146,6 +157,7 @@ Redis a sa place ici, mais pour des usages précis — pas comme cache général
    - **Point non négociable : ne jamais cacher `quantiteStock` avec un TTL long.** Un stock "stale" en cache peut afficher "en stock" alors que ce n'est plus vrai → survente. Deux options : exclure `quantiteStock` du cache (toujours lu en direct depuis la base), ou TTL très court (1-2s) invalidé immédiatement dès qu'un `MvtStk` est enregistré (le service Catalogue peut invalider la clé au moment où il publie `stock.seuil-atteint`, ou simplement à chaque écriture de `MvtStk`).
 2. **Rate limiting au Gateway** : c'est la mise en œuvre concrète de ce qui était déjà mentionné dans la section API Gateway. Le `RequestRateLimiter` de Spring Cloud Gateway s'appuie nativement sur Redis (`spring-boot-starter-data-redis-reactive`) pour stocker les compteurs de requêtes par client/IP.
 3. **Idempotence des consommateurs Kafka** (Service Notification) : Kafka garantit une livraison *at-least-once* — un message peut être traité deux fois. Stocker dans Redis les identifiants de messages déjà traités (TTL raisonnable, ex. 24h) évite d'envoyer deux fois le même email de confirmation.
+4. **Backplane pub/sub pour le suivi de commande en temps réel** (voir section WebSocket ci-dessous) : quand le Service Notification tourne en plusieurs instances, l'instance qui consomme l'événement Kafka n'est pas forcément celle qui détient la connexion WebSocket du client concerné. Publier l'événement sur un canal Redis Pub/Sub permet à **toutes** les instances de le recevoir, et seule celle qui détient la bonne connexion pousse réellement la mise à jour.
 
 Ce qui ne justifie **pas** Redis pour l'instant : le cache de session (JWT est stateless, rien à stocker côté serveur), et l'agrégation du dashboard métier (voir plus bas — commencer par des requêtes à la volée, Redis seulement si un vrai problème de performance apparaît).
 
@@ -165,6 +177,19 @@ Ce qui ne justifie **pas** Redis pour l'instant : le cache de session (JWT est s
 | `stock.seuil-atteint` | Service Catalogue | `Article.quantiteStock <= Article.seuilAlerte` après un `MvtStk` de type `SORTIE` | `Notification` type `ALERTE_STOCK` vers les `Utilisateur` de l'entreprise (rôle `GESTIONNAIRE`/`ADMIN`) |
 
 Le service Notification résout le bon `EmailTemplate` via `TypeNotification`, génère le contenu, envoie l'email, et écrit une ligne `Notification` avec le `statut` correspondant (`ENVOYEE` ou `ECHEC`, avec possibilité de retry sur `ECHEC`).
+
+## Suivi de commande en temps réel (WebSocket)
+
+**Pas de nouveau service** : le Service Notification consomme déjà `commande-client.etat-change` sur Kafka pour envoyer l'email de suivi — on lui ajoute simplement un second canal de sortie plutôt que de dupliquer la logique métier ailleurs. C'est pour ça que `CanalNotification` gagne une 3ᵉ valeur : `EMAIL`, `SMS`, **`WEBSOCKET`** (voir MCD).
+
+**Flux** :
+1. Le `Client` connecté ouvre une connexion `wss://.../ws/commandes/{commandeId}` via le **Gateway** (Spring Cloud Gateway proxy aussi bien le HTTP que le WebSocket, donc le frontend garde un point d'entrée unique) — le Gateway route vers `lb://notification-service` comme pour n'importe quelle route HTTP.
+2. À chaque événement `commande-client.etat-change` consommé, le Service Notification génère (comme avant) la `Notification` de type `SUIVI_COMMANDE`, mais au lieu d'envoyer systématiquement un email, il vérifie s'il existe une connexion WebSocket active pour ce `commandeId` et pousse la mise à jour dessus si oui.
+3. **Passage à l'échelle** : si le Service Notification tourne en plusieurs instances, l'instance qui consomme l'événement Kafka (le partitionnement Kafka ne garantit pas que ce soit celle qui détient la connexion WebSocket du client) publie sur un canal **Redis Pub/Sub** ; toutes les instances y sont abonnées et seule celle qui détient la bonne connexion relaie réellement au client.
+
+**Sécurité** : même règle que le suivi REST — un `Client` ne peut ouvrir un socket que pour une commande dont il est propriétaire (vérifié à l'établissement de la connexion, JWT passé en query param ou sous-protocole WebSocket puisque le header `Authorization` standard n'est pas disponible nativement en WebSocket).
+
+**Alternative à considérer** : ce besoin est unidirectionnel (le serveur pousse un statut, le client ne renvoie rien sur ce canal) — les **Server-Sent Events (SSE)** rempliraient le même rôle avec moins de complexité (pas de handshake dédié, reconnexion automatique native côté navigateur via `EventSource`, pas de souci de proxy WebSocket). WebSocket reste justifié si l'app a par ailleurs un besoin bidirectionnel — typiquement le **chat de l'Assistant IA** (voir section Spring AI) — auquel cas partager la même stack technique pour les deux usages est cohérent. Trancher selon si l'Assistant conversationnel est réellement construit ou reste en HTTP requête/réponse classique.
 
 ## Observabilité (Prometheus / Grafana / AlertManager)
 
@@ -220,3 +245,4 @@ Points d'attention :
 - R2DBC vs JPA+boundedElastic pour la partie WebFlux du service Catalogue.
 - Fournisseur du modèle pour Spring AI (OpenAI, Anthropic via Spring AI, modèle auto-hébergé) — a un impact direct sur le coût et la latence de l'assistant.
 - Faut-il un Config Server en HA, ou une seule instance suffit-elle vu la taille du projet ?
+- **Notifications push natives (APNs)** pour l'app iOS : le WebSocket ne fonctionne que si l'app est ouverte au premier plan/arrière-plan actif — pour prévenir un client d'un changement de statut alors que l'app est fermée, il faudra à terme ajouter `APNS` comme 4ᵉ valeur de `CanalNotification`, en plus de `EMAIL`/`SMS`/`WEBSOCKET`. Pas nécessaire au démarrage, mais à garder en tête dès que l'app iOS existe réellement.
